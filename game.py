@@ -8,6 +8,7 @@ from obstacles import Obstacle
 from gates import Gate
 
 pygame.init()
+pygame.mixer.init() 
 pygame.display.set_caption("Run & Resolve!")
 
 
@@ -17,19 +18,25 @@ class Game:
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.clock = pygame.time.Clock()
 
+        self.running = True
+
+        self.state = "menu"
+        self.paused = False
+        self.difficulty = "Easy"
+
+        self.tap_sound = pygame.mixer.Sound("tap.ogg")
+        self.correct_sound = pygame.mixer.Sound("win.ogg")
+        self.wrong_sound = pygame.mixer.Sound("lose.ogg")
+        self.tap_sound.set_volume(0.5)
+        self.correct_sound.set_volume(0.6)
+        self.wrong_sound.set_volume(0.6)
+
         self.background = Background(800, 800)
         self.lanes = Lanes(self.WIDTH, self.HEIGHT)
         self.player = Character(self.lanes, self.HEIGHT)
 
         self.font = pygame.font.SysFont(None, 40)
         self.big_font = pygame.font.SysFont(None, 80)
-
-        self.running = True
-
-        # STATES
-        self.state = "menu"
-        self.difficulty = "Easy"
-        self.paused = False
 
         # GAME DATA
         self.obstacles = []
@@ -158,17 +165,28 @@ class Game:
             self.in_gate_mode = True
             self.obstacles.clear()
 
-        # UPDATE GATE
-        if self.gate:
+        # ✅ ALWAYS UPDATE GATE IF IT EXISTS
+        if self.gate is not None:
             self.gate.update(dt)
 
+            # CHECK IF PLAYER REACHED GATE
             if self.gate.is_finished():
-                if self.gate.check_answer(self.player.lane):
+                result = self.gate.check_answer(self.player.lane)
+
+                if result is True:
                     print("CORRECT")
+                    self.correct_sound.stop()
+                    self.correct_sound.play()
+
                     self.gate = None
                     self.in_gate_mode = False
-                else:
+
+                elif result is False:
                     print("WRONG")
+
+                    self.wrong_sound.stop()   # prevents overlap (optional but good)
+                    self.wrong_sound.play()   # 🎧 PLAY WRONG SOUND
+
                     self.state = "game_over"
 
         # STOP obstacles during gate mode
