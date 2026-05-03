@@ -4,7 +4,7 @@ import random
 
 class Gate:
     def __init__(self, difficulty):
-        # ALL QUESTION PAIRS
+        # QUESTIONS
         questions = {
             "Easy": [
                 ("easy1_left.png", "easy1_right.png"),
@@ -18,7 +18,6 @@ class Gate:
                 ("easy9_left.png", "easy9_right.png"),
                 ("easy10_left.png", "easy10_right.png"),
             ],
-
             "Medium": [
                 ("medium1_left.png", "medium1_right.png"),
                 ("medium2_left.png", "medium2_right.png"),
@@ -31,7 +30,6 @@ class Gate:
                 ("medium9_left.png", "medium9_right.png"),
                 ("medium10_left.png", "medium10_right.png"),
             ],
-
             "Hard": [
                 ("hard1_left.png", "hard1_right.png"),
                 ("hard2_left.png", "hard2_right.png"),
@@ -53,18 +51,18 @@ class Gate:
         wrong_img = pygame.image.load(wrong_file).convert_alpha()
         correct_img = pygame.image.load(correct_file).convert_alpha()
 
-        # BIGGER gates
+        # scale
         wrong_img = pygame.transform.scale(wrong_img, (300, 340))
         correct_img = pygame.transform.scale(correct_img, (300, 340))
 
-        # spacing
+        # positions
         self.left_x = 40
         self.right_x = 460
 
         self.y = -320
         self.speed = 220
 
-        # RANDOM SIDE SWAP
+        # RANDOM SIDE
         if random.choice([True, False]):
             self.left_img = wrong_img
             self.right_img = correct_img
@@ -74,6 +72,9 @@ class Gate:
             self.right_img = wrong_img
             self.answer = "left"
 
+        # ✅ NEW: prevent multiple checks (VERY IMPORTANT)
+        self.answered = False
+
     def update(self, dt):
         self.y += self.speed * dt
 
@@ -82,9 +83,16 @@ class Gate:
         screen.blit(self.right_img, (self.right_x, self.y))
 
     def is_finished(self):
+        # gate reached player zone
         return self.y > 520
 
     def check_answer(self, lane):
+        # prevent multiple triggers (sound spam fix)
+        if self.answered:
+            return None
+
+        self.answered = True
+
         if lane == 0:
             chosen = "left"
         elif lane == 2:
